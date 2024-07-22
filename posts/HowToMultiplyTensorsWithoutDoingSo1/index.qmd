@@ -1,0 +1,169 @@
+---
+title: "How to multiply tensors wihout doing so? (1/2)"
+author: "Andre Mirończuk"
+date: "2024-06-28"
+categories: [pytorch, numpy, tensors]
+jupyter: python3
+---
+
+Lets use these two simple 2nd-order tensors.
+
+![](./simple_tensors.png)
+
+After multiplying them we get:
+
+```{python}
+import torch
+m1 = torch.tensor([[1, 2], [3, 4]])
+m2 = torch.tensor([[3, 4], [1, 2]])
+m1@m2
+```
+
+![](./simple_matmul.png)
+
+Simple.
+
+But we've used a magic symbol `@`! That's a big no no.
+
+What is happening there?
+
+How about we dont do that.
+
+As you probably know, looping over tensors, mutiplying elements one by one,
+summing them and then putting them in a new tensor of a correct size is a bad
+idea. 
+
+Instead we will start by transposing the second tensor (rotating it over its 'identity' axis).
+
+```{python}
+m2 = m2.T
+m2
+```
+
+![](./tensor_transpose.png)
+
+Why? We'll see in a bit.
+
+Now we want to add a dummy dimension to both tensors. We want the first
+tensors's shape to be [2, 1, 2] and the second to be [1, 2, 2].
+
+We can just reshape them or achieve that by adding two pairs of brackets to the first one and one pair
+of brackets to the second.
+
+```{python}
+m1 = m1.reshape((2, 1, 2)) # torch.tensor([[[1, 2]], [[3, 4]]])
+m2 = m2.reshape((1, 2, 2)) # torch.tensor([[[3, 4], [1, 2]]])
+```
+
+![](./tensor_reshaping.png)
+
+```{python}
+#| output: false
+m1, m2, m1.shape, m2.shape
+```
+
+```{python}
+#| echo: false
+print(m1)
+print(m2)
+print(m1.shape, m2.shape)
+```
+
+Let's multiply them now (element-wise).
+```{python}
+m3 = m1 * m2
+```
+
+What will come out of it exactly?
+
+Multiplication rules tell us that multiplying a [2, 1, 2] tensor by a [1, 2, 2] one
+is indeed possible and will result in a [2, 2, 2] tensor.
+
+::: {.callout-tip appearance="simple"}
+## Broadcasting rules
+* Each tensor has at least one dimension.
+* When iterating over the dimension sizes, starting at the trailing dimension,
+  the dimension sizes must either be equal, one of them is 1, or one of them does
+  not exist.
+:::
+
+As we can see that this operation doesn't brake any rules. Second dimention in
+the first tensor and first dimention in the second tensor will be expanded.
+Importantly, this does not make any copies of the data.
+
+::: {.callout-note appearance="simple"}
+As a side note it's good to remember that in-place operations do not allow the in-place
+tensor to change shape.
+:::
+
+Multiplication rules in this type of scenario can be a bit tricky at first, but
+here it is quite streight forward.
+
+![](./m1_m2_stripped.png)
+
+High overview:  
+Multiply A by m2 and B by m2. Then just put them side by side. This again uses
+broadcasting.
+
+You can simplify it furher:  
+
+1. Multiply A * C. Then you multiply A * D and append it to the frist vector
+<!-- (since you're multiplying it with the same vector (A) as in the previous -->
+<!-- operation). -->
+
+![](./m1_m2_first_operation.png)
+
+2. Now do the same with B. B * C, B * D, append.
+
+![](./m1_m2_second_operation.png)
+
+3. Since B 'is in' a different dimension than A, the resulting tensor will be
+seperate from the previous one. They will be appended together as two 2 by 2
+blocks.
+
+![](./m1_m2_third_operation.png)
+
+Both (1.) and (2.) will, sort of, take care of increasing the size of the second
+dimension of the second tensor to 2:  
+[2, 1, 2] -> [2, 2, 2]  
+(3.) will do the same but to the first demention of the first tensor:  
+[1, 2, 2] -> [2, 2, 2]
+
+We need to do one last thing, that is to sum that tensor over its second
+dimension (last one).
+
+```{python}
+#| output: false
+m3.sum(dim=2)
+```
+
+This will shrink all the vectors in the last dimension to scalars by summing
+all the numbers inside.
+
+Then, since the keepdim flag in `sum()` is set to `False` by default,
+dimensions of size 1 will be squizzed out, leaving us with a tensor of size [2,
+2].
+
+<!-- If we set it to `True` -> `m3.sum(dim=2, keepdim=True)`, the resulting -->
+<!-- tensor's shape would be [2, 2, 1]. -->
+
+<!-- ```{python} -->
+<!-- m3.sum(dim=2, keepdim=True).shape -->
+<!-- ``` -->
+
+Final result, after the last dimension is squeezed out:
+
+```{python}
+#| echo: false
+m3.sum(dim=2)
+```
+
+![](./simple_matmul.png)
+
+It's exactly the same as with `@`!
+
+But why?
+
+Does it always work and is it really what happens under the hood?
+
+Find out in the [second part](../HowToMultiplyTensorsWithoutDoingSo2/index.qmd) of this blog!
