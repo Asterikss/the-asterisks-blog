@@ -1,6 +1,6 @@
 ---
 title: "Andre Mirończuk"
-image: profile.jpg
+image: profile_pic.jpg
 author: ""
 about:
   template: jolla
