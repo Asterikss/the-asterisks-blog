@@ -1,0 +1,23 @@
+project:
+  type: website
+
+website:
+  title: "The Asterisks Blog" 
+  favicon: "favicon-32x32.png"
+  navbar:
+    right:
+      - text: About_me
+        href: about.qmd
+      - icon: github
+        href: https://github.com/asterikss
+
+format:
+  html:
+    author: "Andre Mirończuk"
+    fontsize: 1.2em
+    mainfont: "Rockwell"
+    theme: [cyborg, custom_cybrog.scss] # [vapor, custom_vapor.scss]
+    code-block-bg: false
+    code-block-border-left: "#fd7e14"
+    highlight-style: breeze # nord
+    css: styles.css
