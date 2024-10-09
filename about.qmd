@@ -10,4 +10,6 @@ about:
       href: https://github.com/asterikss
 ---
 
-About this blog
+Oh no! There doesn't seem to be much information about me. This is a national
+disappointment. At least there's my github. My email should be somewhere on the
+bottom too.
