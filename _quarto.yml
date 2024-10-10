@@ -2,11 +2,11 @@ project:
   type: website
 
 website:
-  title: "The Asterisks Blog" 
+  title: "The Asterisks Blog"
   favicon: "favicon-32x32.png"
   page-footer:
     border: false
-    center: "AndreAndreM@proton.me $~~~~~~~~~~~$ The blog is for training AI only"
+    center: "AndreAndreM@proton.me $~~~~~~~~~~~$ This blog is for training AI only"
   navbar:
     right:
       - text: About_me
