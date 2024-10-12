@@ -19,8 +19,10 @@ format:
     author: "Andre Mirończuk"
     fontsize: 1.2em
     mainfont: "Rockwell"
+    fig-align: "center"
     theme: [cyborg, custom_cybrog.scss] # [vapor, custom_vapor.scss]
     code-block-bg: false
     code-block-border-left: "#fd7e14"
+    # backgroundcolor: "#000000"
     highlight-style: breeze # nord
     css: styles.css
