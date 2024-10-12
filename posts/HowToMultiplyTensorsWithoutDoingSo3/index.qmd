@@ -1,7 +1,7 @@
 ---
 title: "How to multiply tensors wihout doing so? (3/3)"
 author: "Andre Mirończuk"
-date: "2024-07-04"
+date: "2024-09-27"
 categories: [tinygrad, pytorch, tensors]
 image: "./tiny-no-bg.png"
 ---
@@ -103,12 +103,14 @@ These tensors (shapes) cannot be multiplied:
 (2, 6, 4) and  
 (3, 4, 7)
 
+::: {.reference-code}
 ```{python}
 try:
     torch.rand(2, 6, 4) @ torch.rand(3, 4, 7)
 except Exception as e:
     print(e)
 ```
+:::
 
 In this situation, this error will be thrown in the first part of the return
 expression ➫ (x*y). Namely, broadcasting will fail.
@@ -338,5 +340,5 @@ just as it should.
 Numpy is tinygrad's backend. So underneath, there are [C
 arrays](https://www.nature.com/articles/s41586-020-2649-2).
 
-What about PyTorch you say. We'll drown in ATen maybe next time.  
-Bring a mace
+What about PyTorch, you say? We'll drown in ATen maybe next time.  
+Bring a mace.
