@@ -1,1 +1,26 @@
 /* css styles */
+.reference-code .code-with-copy {
+    border-left: 3.5px solid rgba(0, 123, 255, 1);
+    /* border-radius: 6px; */
+    /* border-left: 4px solid #8EA604; */
+    /* background-color: rgba(231, 243, 254, 0.15); /* Semi-transparent light blue */ */
+    /* padding: 10px; */
+    /* margin: 10px 0; */
+}
+
+p code {
+    font-weight: bold;
+    background-color: #0e0e0e !important;
+    color: #A67C52; /* warm brown*/
+    /*background-color: #000000 !important;*/
+    /*background-color: #191a19 !important;*/
+    /* color: #57BBBC; /* darkish green, not bad */ */
+    /* color: #234E70; /* royal blue, looks terribe on a normal page*/ */
+    /* color: #654321; /* cherry red, looks nice only on a normal page*/ */
+    /* color: #80C4B7; /* between green and blue, not terrible */ */
+    /* color: #E3856B; /* orangy, too much of this color already */ */
+    /* color: #98FF98; /* glowing green */ */
+    /* color: #654321 /* dark brown */ */
+}
+
+/* pre code {}*/
