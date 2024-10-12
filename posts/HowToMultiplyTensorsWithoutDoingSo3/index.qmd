@@ -6,8 +6,8 @@ categories: [tinygrad, pytorch, tensors]
 image: "./tiny-no-bg.png"
 ---
 
-[First part.](./../HowToMultiplyTensorsWithoutDoingSo1/index.qmd)  
-[Second part.](./../HowToMultiplyTensorsWithoutDoingSo2/index.qmd)
+[First part](./../HowToMultiplyTensorsWithoutDoingSo1/index.qmd)  
+[Second part](./../HowToMultiplyTensorsWithoutDoingSo2/index.qmd)
 
 Let's take [tinygrad](https://github.com/tinygrad/tinygrad) as an example.
 
@@ -161,7 +161,7 @@ print(*[1] * min(3 - 1, 4 - 1, 1))
 
 So:
 
-::: {.important-code}
+::: {.reference-code}
 ```{python}
 #| eval: false
 self.reshape(3, 3, 1, 4)
@@ -184,7 +184,7 @@ print("♘", "♘")
 
 So:
 
-::: {.important-code}
+::: {.reference-code}
 ```{python}
 #| eval: false
 self.reshape(3, 3, 4)
@@ -193,7 +193,7 @@ self.reshape(3, 3, 4)
 
 Instead of:
 
-::: {.important-code}
+::: {.reference-code}
 ```{python}
 #| eval: false
 self.reshape(3, 3, 0, 4)
@@ -232,7 +232,7 @@ print(*w.shape[-min(n2, 2):])
 
 So:
 
-::: {.important-code}
+::: {.reference-code}
 ```{python}
 #| eval: false
 w.reshape(2, 1, 1, 4, 5)
@@ -258,19 +258,19 @@ Again `-min(n2, 2)` will check if we're working with 1-dimensional tensors.
 
 Examples:
 
-::: {.important-code}
+::: {.reference-code}
 ```{python}
 torch.rand(2, 3, 4).transpose(-1, -2).shape
 ```
 :::
 
-::: {.important-code}
+::: {.reference-code}
 ```{python}
 torch.rand(2, 3, 4).transpose(-1, -1).shape
 ```
 :::
 
-::: {.important-code}
+::: {.reference-code}
 ```{python}
 try:
     torch.rand(3).transpose(-1, -2).size
