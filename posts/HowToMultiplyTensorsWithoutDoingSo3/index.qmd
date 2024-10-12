@@ -1,0 +1,342 @@
+---
+title: "How to multiply tensors wihout doing so? (3/3)"
+author: "Andre Mirończuk"
+date: "2024-07-04"
+categories: [tinygrad, pytorch, tensors]
+image: "./tiny-no-bg.png"
+---
+
+[First part.](./../HowToMultiplyTensorsWithoutDoingSo1/index.qmd)  
+[Second part.](./../HowToMultiplyTensorsWithoutDoingSo2/index.qmd)
+
+Let's take [tinygrad](https://github.com/tinygrad/tinygrad) as an example.
+
+Here's the high-level code for matmul:
+
+```{python}
+#| eval: false
+def dot(self, w:Tensor, acc_dtype:Optional[DTypeLike]=None) -> Tensor:
+    n1, n2 = len(self.shape), len(w.shape)
+    assert n1 != 0 and n2 != 0, f"both arguments to matmul need to be at least 1D, but they are {n1}D and {n2}D"
+    if (L:=self.shape[-1]) != (R:=w.shape[-min(n2, 2)]): raise AssertionError(f"shapes {self.shape} and {w.shape} cannot be multiplied ({L} != {R})")
+    x = self.reshape(*self.shape[0:-1], *[1]*min(n1-1, n2-1, 1), self.shape[-1])
+    w = w.reshape(*w.shape[0:-2], *[1]*min(n1-1, n2-1, 1), *w.shape[-min(n2, 2):]).transpose(-1, -min(n2, 2))
+    return (x*w).sum(-1, acc_dtype=acc_dtype).cast(least_upper_dtype(x.dtype, w.dtype) if acc_dtype is None else acc_dtype)
+
+def matmul(self, x:Tensor, reverse=False, acc_dtype:Optional[DTypeLike]=None) -> Tensor:
+    return x.dot(self, acc_dtype=acc_dtype) if reverse else self.dot(x, acc_dtype=acc_dtype)
+```
+
+It might look intimidating, but it's actually really elegant and beautiful.  
+You'll see.
+
+First lines are simple.
+
+We will use these tensors as examples (PyTorch has very similar api, so we will
+use it for simplicity):
+
+```{python}
+import torch
+self = torch.rand(3, 3, 4)
+w = torch.rand(2, 1, 4, 5)
+self.shape, w.shape
+```
+
+We extract the rank of both tensors.
+
+```{python}
+n1, n2 = len(self.shape), len(w.shape)
+n1, n2
+```
+
+Now we do some checks to ensure the operation we want to perform is valid:
+
+```{python}
+assert n1 != 0 and n2 != 0, f"both arguments to matmul need to be at least 1D, but they are {n1}D and {n2}D"
+if (L:=self.shape[-1]) != (R:=w.shape[-min(n2, 2)]): raise AssertionError(f"shapes {self.shape} and {w.shape} cannot be multiplied ({L} != {R})")
+```
+
+The first line is pretty self-explanatory.
+
+The second one will establish if you can indeed matmul those tensors.
+
+`-min(n2, 2)` will evaluate to either `-1` or `-2`. Remember, `n2` cannot be 0 at
+this point. It will compare the last dimension of `self` with the second to
+last dimension of `w`, unless `w` is a vector (1-dimensional tensor, e.g., size =
+(3,), but not a `row vector` (e.g., size = (1, 3))). Then, since there is only one
+dimension, we will extract the last one.
+
+Will that take care of all possible shape permutations between tensors?  
+Not quite. It will handle the most important part and turn a blind eye
+to all batch dimensions. We'll touch on that later.
+
+For two 2-by-2 tensors, it's easy to tell if you can multiply them.
+
+What about those (shapes)?:  
+(2, 1, 6, 4) and  
+(4, 3, 1, 5, 4, 7)
+
+Can you?
+
+Absolutely.
+
+```{python}
+tmp1 = torch.rand(2, 1, 6, 4)
+tmp2 = torch.rand(4, 3, 1, 5, 4, 7)
+(tmp1@tmp2).shape
+```
+
+With all batch dimensions, you only compare them to their counterparts. I wrote
+about broadcasting rules in the first part.
+
+What you sort of end up "matmuling" are the two last dimensions of both tensors:  
+(6, 4) and  
+(4, 7)
+
+Out of it comes (6, 7). The `4`s disappear, and you get the shape (4, 3, 2, 5, 6, 7).
+
+Second line of this snippet checked if those `4`s were the same.
+
+Great! Wait, but what about mismatching batch dimensions?
+
+These tensors (shapes) cannot be multiplied:  
+(2, 6, 4) and  
+(3, 4, 7)
+
+```{python}
+try:
+    torch.rand(2, 6, 4) @ torch.rand(3, 4, 7)
+except Exception as e:
+    print(e)
+```
+
+In this situation, this error will be thrown in the first part of the return
+expression ➫ (x*y). Namely, broadcasting will fail.
+
+Next, we will reshape our tensors just like before.
+
+```{python}
+x = self.reshape(*self.shape[0:-1], *[1]*min(n1-1, n2-1, 1), self.shape[-1])
+```
+
+Both tensors will be reshaped so that they become a cube after being `*`ed.
+
+This operation will put the correct number of singleton dimensions in second to
+last place.
+
+Easy stuff first:
+
+```{python}
+print(*self.shape[0:-1])
+print(self.shape[-1])
+```
+
+Moving on.
+
+Now, this is beautiful Python:
+
+```{python}
+#| eval: false
+*[1]*min(n1-1, n2-1, 1)
+```
+
+`min(n1 - 1, n2 - 1, 1)` will evaluate to either 1 or 0. It just checks if
+either of the tensors is 1-dimensional (e.g., shape = (3,)). We have already
+seen this type of operation from before ➫ `-min(n2, 2)`.
+
+```{python}
+#| eval: false
+*[1]*
+```
+What is this?
+
+If `min(n1 - 1, n2 - 1, 1)` evaluates to `1`, `[1]` will not change. Then,
+using `*`, it will be unpacked to just a `1`. So exactly the output of
+`min(n1 - 1, n2 - 1, 1)`.
+
+```{python}
+print(min(n1-1, n2-1, 1))
+print(*[1] * min(3 - 1, 4 - 1, 1))
+```
+
+So:
+
+::: {.important-code}
+```{python}
+#| eval: false
+self.reshape(3, 3, 1, 4)
+```
+:::
+
+However if `min(n1 - 1, n2 - 1, 1)` evaluates to 0, then we don't want to put
+anything there (`x = self.reshape(3, 3, 4)` and not `x = self.reshape(3, 3, 0,
+4)` or `x = self.reshape(3, 3, —, 4)`).
+
+To achieve that, we first multiply the result with `[1]`. For `1`, it will not
+change anything, as we stated already. But for `0`, instead of `[0]`, we will
+actually get just an empty list `[]`. And when you unpack an empty list, it
+will disappear.
+
+```{python}
+print("♘", *[1] * min(3 - 1, 1 - 1, 1), "♘")
+print("♘", "♘")
+```
+
+So:
+
+::: {.important-code}
+```{python}
+#| eval: false
+self.reshape(3, 3, 4)
+```
+:::
+
+Instead of:
+
+::: {.important-code}
+```{python}
+#| eval: false
+self.reshape(3, 3, 0, 4)
+```
+:::
+
+Genius.
+
+Let's peek at the shape.
+
+```{python}
+x.shape
+```
+Just as we discussed.
+
+We'll do something similar for the second tensor:
+
+```{python}
+#| eval: false
+w = w.reshape(
+    *w.shape[0:-2],
+    *[1] * min(n1 - 1, n2 - 1, 1),
+    *w.shape[-min(n2, 2):]
+).transpose(-1, -min(n2, 2))
+```
+
+```{python}
+print(*w.shape[0:-2], end="   ")
+print(*[1]*min(n1 - 1, n2 - 1, 1), end="   ")
+print(*w.shape[-min(n2, 2):])
+```
+
+`*w.shape[0:-2]` extracts all dimensions not including the last two (could be []).  
+`*[1]*min(n1-1, n2-1, 1)` does the same thing as before.  
+`*w.shape[-min(n2, 2):]` extracts all the left-out dimensions (either the last two or the last one).
+
+So:
+
+::: {.important-code}
+```{python}
+#| eval: false
+w.reshape(2, 1, 1, 4, 5)
+```
+:::
+
+```{python}
+w = w.reshape(*w.shape[0:-2], *[1]*min(n1-1, n2-1, 1), *w.shape[-min(n2, 2):])
+```
+
+Let's peak at the shape (before transposing).
+
+```{python}
+w.shape
+```
+
+<!-- TODO -->
+We'll transpose it for the same reasons we stated in previous parts.  
+Again `-min(n2, 2)` will check if we're working with 1-dimensional tensors.
+
+`.transpose(-1, -2)` switches the two last dimensions.  
+`.transpose(-1, -1)` does nothing.
+
+Examples:
+
+::: {.important-code}
+```{python}
+torch.rand(2, 3, 4).transpose(-1, -2).shape
+```
+:::
+
+::: {.important-code}
+```{python}
+torch.rand(2, 3, 4).transpose(-1, -1).shape
+```
+:::
+
+::: {.important-code}
+```{python}
+try:
+    torch.rand(3).transpose(-1, -2).size
+except Exception as e:
+    print(e)
+```
+:::
+
+Let's finish transposing.
+
+```{python}
+w = w.transpose(-1, -min(n2, 2))
+```
+
+```{python}
+w.shape
+```
+
+Lastly we'll multiply them and sum over the last dimension, skipping custom
+logic regarding library's dtypes.
+
+```{python}
+#| eval: false
+return (x * w)
+        .sum(-1, acc_dtype=acc_dtype)
+        .cast(
+            least_upper_dtype(x.dtype, w.dtype) 
+            if acc_dtype is None 
+            else acc_dtype
+        )
+```
+
+```{python}
+x.shape, w.shape
+```
+
+Now, broadcast into a higher dimension over the created singleton dimensions
+(for two  2-dimensional starting tensors, this would result in a cube), then
+reduce it back to the original dimension using `sum()`, which squeezes out the
+singleton dimensions by default.
+
+```{python}
+(x*w).shape
+```
+
+```{python}
+res = (x*w).sum(-1)
+```
+
+And...
+
+```{python}
+res
+```
+
+```{python}
+res.shape
+```
+
+Here it is. Nice and warm.
+
+It went through a very similar route as our recruits from before and came out
+just as it should.
+
+Numpy is tinygrad's backend. So underneath, there are [C
+arrays](https://www.nature.com/articles/s41586-020-2649-2).
+
+What about PyTorch you say. We'll drown in ATen maybe next time.  
+Bring a mace
