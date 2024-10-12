@@ -1,14 +1,14 @@
 ---
 title: "How to multiply tensors wihout doing so? (1/3)"
 author: "Andre Mirończuk"
-date: "2024-06-28"
+date: "2024-08-15"
 categories: [pytorch, tensors]
 jupyter: python3
 ---
 
 Let's use these two simple 2nd-order tensors.
 
-![](./simple_tensors.png)
+![](./simple_tensors.png){fig-align="center"}
 
 After multiplying them we get:
 
@@ -19,7 +19,7 @@ t2 = torch.tensor([[3, 4], [1, 2]])
 t1@t2
 ```
 
-![](./simple_matmul.png)
+![](./simple_matmul.png){fig-align="center"}
 
 Simple.
 
@@ -41,7 +41,7 @@ t2 = t2.T
 t2
 ```
 
-![](./tensor_transpose.png)
+![](./tensor_transpose.png){fig-align="center"}
 
 Why? We'll see in a bit.
 
@@ -56,7 +56,7 @@ t1 = t1.reshape((2, 1, 2)) # torch.tensor([[[1, 2]], [[3, 4]]])
 t2 = t2.reshape((1, 2, 2)) # torch.tensor([[[3, 4], [1, 2]]])
 ```
 
-![](./tensor_reshaping.png)
+![](./tensor_reshaping.png){fig-align="center"}
 
 ```{python}
 #| output: false
@@ -100,7 +100,7 @@ tensor to change shape.
 Multiplication rules in this type of scenario can be a bit tricky at first, but
 here it is quite streightforward.
 
-![](./t1_t2_stripped.png)
+![](./t1_t2_stripped.png){fig-align="center"}
 
 High-level overview:  
 Multiply A by CD block and B by CD block. Then just put them side by side. This again uses
@@ -110,17 +110,17 @@ You can simplify it furher:
 
 1. Multiply A * C. Then you multiply A * D and append it to the frist vector.
 
-![](./t1_t2_first_operation.png)
+![](./t1_t2_first_operation.png){fig-align="center"}
 
 2. Now do the same with B. B * C, B * D, append.
 
-![](./t1_t2_second_operation.png)
+![](./t1_t2_second_operation.png){fig-align="center"}
 
 3. Since B 'is in' a different dimension than A, the resulting tensor will be
 seperate from the previous one. They will be appended together as two 2-by-2
 blocks.
 
-![](./t1_t2_third_operation.png)
+![](./t1_t2_third_operation.png){fig-align="center"}
 
 Both (1.) and (2.) will, sort of, take care of increasing the size of the second
 dimension of the second tensor to 2:  
@@ -161,7 +161,7 @@ Final result, after the summation and squeezing out the last dimension:
 t3.sum(dim=2)
 ```
 
-![](./simple_matmul.png)
+![](./simple_matmul.png){fig-align="center"}
 
 It's exactly the same as with `@`!
 
