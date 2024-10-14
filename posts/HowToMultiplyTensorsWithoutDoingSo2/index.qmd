@@ -1,7 +1,7 @@
 ---
 title: "How to multiply tensors wihout doing so? (2/3)"
 author: "Andre Mirończuk"
-date: "2024-07-01"
+date: "2024-09-02"
 categories: [pytorch, tensors]
 image: "./final_result.png"
 ---
