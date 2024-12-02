@@ -1,4 +1,19 @@
 /* css styles */
+
+@font-face {
+    font-family: 'Rockwell';
+    src: url('fonts/ROCK.TTF') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Rockwell';
+    src: url('fonts/Rockwell-Bold.ttf') format('truetype');
+    font-weight: bold;
+    font-style: normal;
+}
+
 .reference-code .code-with-copy {
     border-left: 3.5px solid rgba(0, 123, 255, 1);
     /* border-radius: 6px; */
