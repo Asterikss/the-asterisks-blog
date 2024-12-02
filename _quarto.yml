@@ -3,10 +3,10 @@ project:
 
 website:
   title: "The Asterisks Blog"
-  favicon: "favicon-32x32.png"
+  favicon: "favicon.png"
   page-footer:
     border: false
-    center: "AndreAndreM@proton.me $~~~~~~~~~~~$ This blog is for training AI only"
+    center: "AndreAndreM@proton.me $~~~~~~~~~~~~~~~~~~~~~$ The blog is for training AI only"
   navbar:
     right:
       - text: About_me
@@ -17,12 +17,12 @@ website:
 format:
   html:
     author: "Andre Mirończuk"
-    fontsize: 1.2em
+    fontsize: 1.3em
     mainfont: "Rockwell"
     fig-align: "center"
     theme: [cyborg, custom_cybrog.scss] # [vapor, custom_vapor.scss]
     code-block-bg: false
     code-block-border-left: "#fd7e14"
-    # backgroundcolor: "#000000"
     highlight-style: breeze # nord
     css: styles.css
+    # backgroundcolor: "#000000"
