@@ -1,9 +1,9 @@
 {
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    flake-utils.url = "github:numtide/flake-utils";
+    quarto-base.url = "github:asterikss/quarto-base-flake";
 
-    quarto-base.url = "../../nix/.";
+    nixpkgs.follows = "quarto-base/nixpkgs";
+    flake-utils.url = "github:numtide/flake-utils";
   };
 
   outputs =
@@ -16,21 +16,12 @@
     flake-utils.lib.eachDefaultSystem (
       system:
       let
-        pkgs = import nixpkgs { inherit system; };
+        pkgs = quarto-base.nixpkgsFor.${system};
         packageOverrides = pkgs.callPackage ./python-packages.nix { };
         python = pkgs.python312.override { inherit packageOverrides; };
 
-        # extendedQuarto = quarto-base.lib.${system}.mkQuartoEnv {
-        #   extraPythonPackages =
-        #     ps: with ps; [
-        #       torch
-        #       torchinfo
-        #       fvcore
-        #     ];
-        # };
-
         extendedQuarto = quarto-base.lib.${system}.mkQuartoCustomPython {
-          python = python;
+          inherit python;
           extraPythonPackages =
             ps: with ps; [
               torch
