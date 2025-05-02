@@ -3,7 +3,7 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     flake-utils.url = "github:numtide/flake-utils";
 
-    quarto-base.url = "../../.";
+    quarto-base.url = "../../nix/.";
   };
 
   outputs =
@@ -17,15 +17,27 @@
       system:
       let
         pkgs = import nixpkgs { inherit system; };
+        packageOverrides = pkgs.callPackage ./python-packages.nix { };
+        python = pkgs.python312.override { inherit packageOverrides; };
 
-        extendedQuarto = quarto-base.lib.${system}.mkQuartoEnv {
+        # extendedQuarto = quarto-base.lib.${system}.mkQuartoEnv {
+        #   extraPythonPackages =
+        #     ps: with ps; [
+        #       torch
+        #       torchinfo
+        #       fvcore
+        #     ];
+        # };
+
+        extendedQuarto = quarto-base.lib.${system}.mkQuartoCustomPython {
+          python = python;
           extraPythonPackages =
             ps: with ps; [
               torch
               torchinfo
               fvcore
-              # ptflops
-              # calflop
+              # Custom package available through packageOverrides
+              pyperclip3
             ];
         };
       in

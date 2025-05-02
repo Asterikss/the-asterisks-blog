@@ -74,13 +74,13 @@
         "nixpkgs": "nixpkgs_2"
       },
       "locked": {
-        "lastModified": 0,
-        "narHash": "sha256-eafE2QlASnrU/DFQ8s6mmZw3hix99ZfzN6gwWkHK33k=",
-        "path": "/nix/store/q2lby7ixvmkzkm6y6m10yy82icagkd3d-source",
+        "lastModified": 1,
+        "narHash": "sha256-vXMt8xCA2HpJlZsaz/er4a4fRntHtGDUSOreUGh6rKg=",
+        "path": "/nix/store/nnh1m5kzps63d51cbc8da9ldl4rnb6y6-source/nix",
         "type": "path"
       },
       "original": {
-        "path": "/nix/store/q2lby7ixvmkzkm6y6m10yy82icagkd3d-source",
+        "path": "/nix/store/nnh1m5kzps63d51cbc8da9ldl4rnb6y6-source/nix",
         "type": "path"
       }
     },
