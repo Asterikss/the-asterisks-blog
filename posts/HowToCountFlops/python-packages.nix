@@ -4,12 +4,12 @@
 { pkgs, fetchurl, fetchgit, fetchhg }:
 
 self: super: {
-  "termcolor" = super.buildPythonPackage rec {
-    pname = "termcolor";
-    version = "3.0.1";
+  "pyperclip3" = super.buildPythonPackage rec {
+    pname = "pyperclip3";
+    version = "0.4.1";
     src = fetchurl {
-      url = "https://files.pythonhosted.org/packages/a6/7e/a574ccd49ad07e8b117407bac361f1e096b01f1b620365daf60ff702c936/termcolor-3.0.1-py3-none-any.whl";
-      sha256 = "0s8cq62j8vqsa5j6xhz15dhwpk5kppz5kn3nfkhv5iaxibnd87ns";
+      url = "https://files.pythonhosted.org/packages/56/09/8f71b75e1019670322fa55a3b94e01af8b8097dbd039331582a56a785999/pyperclip3-0.4.1-py3-none-any.whl";
+      sha256 = "0lclfzmz365fq6qj88aplkn35rxz5kvwcb6p23s170w50h52jca6";
     };
     format = "wheel";
     doCheck = false;
