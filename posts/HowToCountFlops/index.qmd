@@ -1,0 +1,243 @@
+---
+title: "Different ways of counting PyTorch model FLOPs (library compilation)"
+author: "Andre Mirończuk"
+date: "2025-01-27"
+categories: [pytorch, FLOPs]
+image: "./how_to_count_flops_tile.png"
+---
+
+Profiling libraries in one spot.
+
+Keep in mind that automatic FLOP measurements are approximations and can be
+imprecise, particularly when faced with non-standard layers. Custom kernels, for
+example, will be outright skipped if no formulas or specific values are manually
+registered for them. Similarly, unsupported operations will not contribute to the
+final estimation; sparse tensors may yield the same FLOP counts as their dense
+counterparts. And so on...
+
+That being said, those numbers are still accurate enough in a lot of scenarios and
+can be quite handy, especially when comparing similar architectures (uumh actually,
+algorithms running on those architectures).
+
+You can check your intuition by asking yourself: What is the FLOP count for an
+embedding layer? Backward pass? What about fine-tuning a model with the embedding
+layer being frozen? A de-embedding layer?
+
+```{python}
+from torchvision.models import wide_resnet50_2
+import torch
+
+wide_resnet = wide_resnet50_2(weights=None)
+input_shape = (1, 3, 244, 244)
+input_tensor = torch.randn(input_shape)
+```
+
+### Option 1: PyTorch's inbuilt FLOP counter
+
+As of now this module is actually undocumented. More info in the resources part. This
+code takes into consideration both forward and backward pass.
+
+```{python}
+from torch.utils.flop_counter import FlopCounterMode
+
+flop_counter = FlopCounterMode(display=False, depth=None)
+with flop_counter:
+  wide_resnet(input_tensor).sum().backward()
+total_flops_one_fwd_bwd: int = flop_counter.get_total_flops()
+print(f"Total GigaFLOPs one forward-backward: {total_flops_one_fwd_bwd / 1e9}")
+```
+
+- Resources:
+  - [dev-discuss.pytorch.org/t/the-ideal-pytorch-flop-counter-with-torch-dispatch/505](https://dev-discuss.pytorch.org/t/the-ideal-pytorch-flop-counter-with-torch-dispatch/505)
+    - [colab.research.google.com/drive/1zjAisRrc8R6uixKsrs1DRm3lwz5MWN68#scrollTo=w9Dezwu6PWtW](https://colab.research.google.com/drive/1zjAisRrc8R6uixKsrs1DRm3lwz5MWN68#scrollTo=w9Dezwu6PWtW)
+  - [github.com/pytorch/pytorch/issues/123800](https://github.com/pytorch/pytorch/issues/123800)
+  - [github.com/pytorch/pytorch/issues/5013](https://github.com/pytorch/pytorch/issues/5013)
+  - [github.com/pytorch/pytorch/blob/main/torch/utils/flop_counter.py](https://github.com/pytorch/pytorch/blob/main/torch/utils/flop_counter.py)
+
+
+### Option 2: torchinfo
+
+This time only the forward pass.
+
+```{python}
+#| output: false
+from torchinfo import summary
+model_stats = summary(wide_resnet, input_size=input_shape, verbose=0)
+model_stats
+```
+
+```{python}
+#| code-fold: true
+#| code-summary: print model_stats reasonably
+from IPython.display import Markdown, display
+summary_str = str(model_stats)
+
+display(Markdown("```\n" + summary_str[:500] + "\n```"))
+print("...")
+display(Markdown("```\n" + summary_str[-645:] + "\n```"))
+```
+
+`Total mult-adds (G): 14.38` is of intrest to us (`Giga-MACs` = 1B (10⁹) MACs). So
+28.76 GFLOPs.
+
+Given that it is often assumed that backward pass has about twice the amount of FLOPs as
+the forward one, this checks out. 28.76 * 3 = `{python} 28.76 * 3`, which is close to
+PyTorch's FlopCounterMode output.
+
+- Resources:
+  - [github.com/TylerYep/torchinfo](https://github.com/TylerYep/torchinfo)
+
+### Option3: deepspeed
+
+```python
+from deepspeed.profiling.flops_profiler import get_model_profile
+from deepspeed.accelerator import get_accelerator
+
+# with get_accelerator().device(0):
+flops, macs, params = get_model_profile(
+  model=wide_resnet,
+  input_shape=input_shape,
+  args=None,
+  kwargs=None,
+  print_profile=True,
+  detailed=True,
+  module_depth=-1,
+  top_modules=1,
+  warm_up=10,
+  as_string=True,
+  output_file=None,
+  ignore_modules=None,
+)
+
+print(flops, macs, params)
+print("Params:", params)
+print("GMACs:", macs)
+print("GFLOPs:", flops)
+```
+
+```text
+Params: 68.88 M
+GMACs: 14.38 GMACs
+GFLOPs: 28.81 G
+```
+
+Besides these values, deepspeed outputs quite a detailed profiling report.
+
+- Resources:
+  - [deepspeed.ai/tutorials/flops-profiler](https://www.deepspeed.ai/tutorials/flops-profiler/)
+
+### Option4: fvcore
+
+```{python}
+from fvcore.nn import FlopCountAnalysis
+
+flops = FlopCountAnalysis(wide_resnet, input_tensor)
+print("FLOPs: ", flops.total())
+print(f"GFLOPs: {flops.total() / 1e9}")
+```
+
+Well, interestingly, we got almost exactly as many FLOPs as MACs with torchinfo and
+deepspeed.  
+Encounter counter does not disappoint.
+
+- Resources:
+  - [github.com/facebookresearch/fvcore/blob/main/docs/flop_count.md](https://github.com/facebookresearch/fvcore/blob/main/docs/flop_count.md)
+
+### Option5: ptflops
+
+```python
+from ptflops import get_model_complexity_info
+
+macs, params = get_model_complexity_info(
+  wide_resnet, input_shape[1:], as_strings=False, print_per_layer_stat=False, backend='pytorch'
+)
+print("Params:", params)
+print("GMACs:", macs / 1e9)
+print("GFLOPs:", (macs / 1e9) * 2)
+```
+
+```text
+Params: 68883240
+GMACS: 14.44918756
+GFLOPS: 28.89837512
+```
+
+- Resources:
+  - [github.com/sovrasov/flops-counter.pytorch](https://github.com/sovrasov/flops-counter.pytorch)
+
+### Option6: flopth
+
+```python
+from flopth import flopth
+
+flops, params = flopth(wide_resnet, in_size=input_shape[1:])
+print("Params:", params)
+print("GFLOPs:", flops)
+```
+
+```text
+Params: 68.8832M
+GFLOPs: 14.4242G
+```
+
+- Resources:
+  - [github.com/vra/flopth](https://github.com/vra/flopth)
+
+### Option7: calflops
+
+```python
+from calflops import calculate_flops
+
+flops, macs, params = calculate_flops(
+  model=wide_resnet, input_shape=input_shape, output_as_string=True, output_precision=4
+)
+
+print("Params:", params)
+print("GMACs:", macs[:7])
+print("GFLOPs:", flops[:7])
+```
+
+```text
+Params: 68.8832 M
+GMACs: 14.3801
+GFLOPs: 28.8124
+```
+
+- Resources:
+  - [github.com/MrYxJ/calculate-flops.pytorch?tab=readme-ov-file](https://github.com/MrYxJ/calculate-flops.pytorch?tab=readme-ov-file)
+  - Online hg frontend:
+    - [huggingface.co/spaces/MrYXJ/calculate-model-flops](https://huggingface.co/spaces/MrYXJ/calculate-model-flops)
+
+### Option8: thop
+
+```python
+from thop import profile
+
+macs, params = profile(wide_resnet, inputs=(input_tensor, ))
+print("Params:", params)
+print("GMACs:", macs / 1e9)
+```
+
+```text
+Params: 68883240.0
+GMACs: 43.352484096
+```
+
+43 is quite a number when compared to other profilers.
+
+- Resources:
+  - [github.com/Lyken17/pytorch-OpCounter](https://github.com/Lyken17/pytorch-OpCounter)
+  - [bnikolic.co.uk/blog/python/flops/2019/10/01/pytorch-count-flops.html](https://bnikolic.co.uk/blog/python/flops/2019/10/01/pytorch-count-flops.html)
+
+
+If you're looking for a dedicated third-party library, I would choose between
+deepspeed, calflops (Transformers), and fvcore (CV).
+
+##### Other Resources
+
+- Some further discussions:
+  - [github.com/tensorflow/tensorflow/pull/19792#issuecomment-415607267](https://github.com/tensorflow/tensorflow/pull/19792#issuecomment-415607267)
+  - [discuss.pytorch.org/t/calculating-flops-of-a-given-pytorch-model/3711/7](https://discuss.pytorch.org/t/calculating-flops-of-a-given-pytorch-model/3711/7)
+
+- More profilers:
+  - [mmcv.readthedocs.io/en/latest/api/generated/mmcv.cnn.get_model_complexity_info.html?highlight=flops](https://mmcv.readthedocs.io/en/latest/api/generated/mmcv.cnn.get_model_complexity_info.html?highlight=flops)
