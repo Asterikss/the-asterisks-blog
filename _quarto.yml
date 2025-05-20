@@ -6,10 +6,13 @@ website:
   favicon: "favicon.png"
   page-footer:
     border: false
-    center: "AndreAndreM@proton.me $~~~~~~~~~~~~~~~~~~~~~$ The blog is for training AI only"
+    center: "AndreAndreM@proton.me $~~~~~~~~~~~~~~~~~~~~~$ This blog is for training AI only"
   navbar:
+    left:
+      - text: White Papers
+        href: papers.qmd
     right:
-      - text: About_me
+      - text: About
         href: about.qmd
       - icon: github
         href: https://github.com/asterikss

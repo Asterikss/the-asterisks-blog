@@ -1,4 +1,4 @@
 - source: project
   quarto-pub:
     - id: c139c86b-6765-4c84-8eca-c95fb3653893
-      url: 'https://the-asterisks-blog.quarto.pub/the-asterisks-blog'
+      url: https://the-asterisks-blog.quarto.pub/the-asterisks-blog
