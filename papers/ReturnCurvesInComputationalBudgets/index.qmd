@@ -1,0 +1,13 @@
+---
+title: "Return Curves in Computational Budgets: Analyzing FLOPs for Varying Returns"
+author: "Andre Mirończuk"
+date: "2025-05-15"
+categories: []
+image: "./post_preview.png"
+metadata-fields: [author, date]
+---
+
+![](./paper.pdf){width=100% height=900}
+
+If it renders like a 1990s webcam, or if you just want it on a separate page, click
+[this](./paper.pdf "Not Virus").

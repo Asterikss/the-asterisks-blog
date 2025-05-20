@@ -1,0 +1,14 @@
+---
+listing:
+  contents: papers
+  sort: "date desc"
+  type: default
+  categories: false
+  sort-ui: false
+  filter-ui: false
+  date-format: "YYYY-MM-DD"
+  fields: [image, title, date]
+page-layout: full
+title-block-banner: false
+---
+![](./blog_banner.png)
