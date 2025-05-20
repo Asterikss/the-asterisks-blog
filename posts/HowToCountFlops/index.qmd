@@ -1,9 +1,11 @@
 ---
 title: "Different ways of counting PyTorch model FLOPs (library compilation)"
 author: "Andre Mirończuk"
-date: "2025-01-27"
+date: "2025-03-27"
 categories: [pytorch, FLOPs]
-image: "./how_to_count_flops_tile.png"
+image: "./thumbnail.png"
+execute:
+  freeze: true
 ---
 
 Profiling libraries in one spot.
@@ -77,7 +79,7 @@ print("...")
 display(Markdown("```\n" + summary_str[-645:] + "\n```"))
 ```
 
-`Total mult-adds (G): 14.38` is of intrest to us (`Giga-MACs` = 1B (10⁹) MACs). So
+`Total mult-adds (G): 14.38` is of intrest to us (`giga-MACs` = 1B (10⁹) MACs). So
 28.76 GFLOPs.
 
 Given that it is often assumed that backward pass has about twice the amount of FLOPs as
